@@ -67,6 +67,40 @@ export const aiRouteOptimizer = (body) => request('/ai/route-optimizer', { metho
 export const aiDemandForecast = (body) => request('/ai/demand-forecast', { method: 'POST', body: JSON.stringify(body || {}) });
 export const aiSwarmCoordinator = (body) => request('/ai/swarm-coordinator', { method: 'POST', body: JSON.stringify(body || {}) });
 export const aiExceptionRouting = (body) => request('/ai/exception-routing', { method: 'POST', body: JSON.stringify(body || {}) });
+export const aiMisPickDetect = (body) => request('/ai/mis-pick-detect', { method: 'POST', body: JSON.stringify(body || {}) });
+export const aiSlotOccupancyForecast = (body) => request('/ai/slot-occupancy-forecast', { method: 'POST', body: JSON.stringify(body || {}) });
+export const aiAnomalyNarrate = (body) => request('/ai/anomaly-narrate', { method: 'POST', body: JSON.stringify(body || {}) });
+export const aiScanFailureRca = (body) => request('/ai/scan-failure-rca', { method: 'POST', body: JSON.stringify(body || {}) });
+export const aiPhotoDamageClassify = (body) => request('/ai/photo-damage-classify', { method: 'POST', body: JSON.stringify(body || {}) });
+
+// Apply pass 7 — backlog non-AI helpers
+export const scan_schedulesApi = crud('scan-schedules');
+export const getAuditLog = (params = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  return request(`/audit-log${qs ? '?' + qs : ''}`);
+};
+export const wmsLive = {
+  status: () => request('/wms-live/status'),
+  pull: (b) => request('/wms-live/pull', { method: 'POST', body: JSON.stringify(b || {}) }),
+  push: (b) => request('/wms-live/push', { method: 'POST', body: JSON.stringify(b || {}) }),
+  sync: (b) => request('/wms-live/sync', { method: 'POST', body: JSON.stringify(b || {}) }),
+};
+export const scanProofsApi = {
+  list: () => request('/scan-proofs'),
+  get: (id) => request(`/scan-proofs/${id}`),
+  generate: (b) => request('/scan-proofs/generate', { method: 'POST', body: JSON.stringify(b || {}) }),
+  verify: (id, b) => request(`/scan-proofs/${id}/verify`, { method: 'POST', body: JSON.stringify(b || {}) }),
+};
+export const crossDcApi = {
+  list: () => request('/cross-dc-reconciliations'),
+  get: (id) => request(`/cross-dc-reconciliations/${id}`),
+  run: (b) => request('/cross-dc-reconciliations/run', { method: 'POST', body: JSON.stringify(b || {}) }),
+};
+export const technicianDispatchApi = {
+  list: () => request('/technician-dispatches'),
+  fromDiscrepancy: (id, b) => request(`/technician-dispatches/from-discrepancy/${id}`, { method: 'POST', body: JSON.stringify(b || {}) }),
+  fromAnomaly: (b) => request('/technician-dispatches/from-anomaly', { method: 'POST', body: JSON.stringify(b || {}) }),
+};
 
 export const getAIHistory = (feature, limit = 25) => {
   const qs = new URLSearchParams({ ...(feature ? { feature } : {}), limit: String(limit) }).toString();

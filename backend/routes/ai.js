@@ -11,7 +11,12 @@ const SCHEMAS = {
   'route-optimizer': `{"plan":[{"drone_id":string,"sequence":[string],"distance_m":number,"duration_minutes":number}],"total_duration_minutes":number,"coverage_pct":number,"summary":string}`,
   'demand-forecast': `{"forecast":[{"sku":string,"qty_next_period":number,"confidence_interval":[number,number],"trend":"up"|"down"|"flat","driver":string}],"reorder_recommendations":[string],"summary":string}`,
   'swarm-coordinator': `{"swarm_plan":[{"drone_id":string,"role":string,"path_hint":string}],"coordination_strategy":string,"collision_avoidance_rules":[string],"abort_triggers":[string],"summary":string}`,
-  'exception-routing': `{"queue":string,"assigned_to":string,"sla_minutes":number,"escalation_path":[string],"automation_attempted":boolean,"summary":string}`
+  'exception-routing': `{"queue":string,"assigned_to":string,"sla_minutes":number,"escalation_path":[string],"automation_attempted":boolean,"summary":string}`,
+  'mis-pick-detect': `{"mis_picks":[{"sku":string,"location":string,"expected_sku":string,"observed_sku":string,"confidence":number,"severity":"low"|"medium"|"high"|"critical","reason":string}],"total_mis_picks":number,"hot_aisles":[string],"recommended_actions":[string],"summary":string}`,
+  'slot-occupancy-forecast': `{"forecast":[{"slot":string,"current_occupancy_pct":number,"forecast_occupancy_pct":number,"horizon_days":number,"trend":"up"|"down"|"flat","saturation_risk":"low"|"medium"|"high","driver":string}],"hot_slots":[string],"rebalance_recommendations":[string],"summary":string}`,
+  'anomaly-narrate': `{"headline":string,"narrative":string,"timeline":[{"time":string,"event":string}],"impact":string,"root_cause_hypothesis":string,"recommended_next_steps":[string],"audience":"ops"|"exec"|"engineering","summary":string}`,
+  'scan-failure-rca': `{"root_causes":[{"cause":string,"likelihood":"low"|"medium"|"high","evidence":[string]}],"correlated_signals":[string],"fix_recommendations":[string],"prevention_plan":[string],"estimated_recurrence_pct":number,"summary":string}`,
+  'photo-damage-classify': `{"damage_detected":boolean,"damage_type":string,"severity":"none"|"minor"|"moderate"|"severe","confidence":number,"affected_components":[string],"recommended_action":string,"requires_quarantine":boolean,"summary":string}`
 };
 
 const SAMPLES = {
@@ -54,6 +59,31 @@ const SAMPLES = {
     { label: 'Captcha', values: {"exception_summary":"DR-002 stopped on captcha.","urgency":"urgent"} },
     { label: 'Critical mismatch', values: {"exception_summary":"C-3-1 scanned 580, expected 440.","urgency":"critical"} },
     { label: 'Low battery', values: {"exception_summary":"DR-003 at 8%.","urgency":"urgent"} }
+  ],
+  'mis-pick-detect': [
+    { label: 'Aisle A cluster', values: {"scan_results_text":"A-1-3 expected SKU-A-001 observed SKU-A-002 qty 142\nA-1-4 expected SKU-A-002 observed SKU-A-001 qty 50","pick_list_text":"A-1-3 SKU-A-001 142\nA-1-4 SKU-A-002 50"} },
+    { label: 'Zone B mixed', values: {"scan_results_text":"B-2-1 expected SKU-B-220 observed SKU-B-221 qty 60","pick_list_text":"B-2-1 SKU-B-220 60"} },
+    { label: 'High-velocity row', values: {"scan_results_text":"F-12-1 expected SKU-X-100 observed SKU-X-100 qty 880\nF-12-2 expected SKU-X-101 observed SKU-X-100 qty 12","pick_list_text":"F-12-1 SKU-X-100 880\nF-12-2 SKU-X-101 12"} }
+  ],
+  'slot-occupancy-forecast': [
+    { label: 'Zone B trending', values: {"slot_history_text":"A-1-1 70%\nA-1-2 82%\nA-1-3 91% (climbing 5%/wk)","horizon_days":14} },
+    { label: 'Cold storage', values: {"slot_history_text":"CS-3-1 45%\nCS-3-2 48%\nCS-3-3 50%","horizon_days":30} },
+    { label: 'High-velocity rack', values: {"slot_history_text":"F-12-1 95%\nF-12-2 96%\nF-12-3 97%","horizon_days":7} }
+  ],
+  'anomaly-narrate': [
+    { label: 'Shrinkage spike', values: {"anomaly_summary":"Zone B SKU shrinkage went 0.4% -> 4.1% in one week","context_hint":"Reno DC zone B","audience":"exec"} },
+    { label: 'Drone deviation', values: {"anomaly_summary":"DR-002 hit 3 obstacle-detected events in aisle A-1","context_hint":"Memphis Hub","audience":"engineering"} },
+    { label: 'WMS mismatch cluster', values: {"anomaly_summary":"14 SKUs in C aisle show +50% qty vs WMS","context_hint":"Newark FC","audience":"ops"} }
+  ],
+  'scan-failure-rca': [
+    { label: 'Repeated scan errors', values: {"failure_summary":"DR-003 failed 22 of 80 scans in aisle B-2","telemetry_snippet":"battery_pct dropped 92 -> 41 in 18 min, motor_temp 78C","maintenance_snippet":"Last battery swap 412 hrs ago"} },
+    { label: 'WMS gap', values: {"failure_summary":"Aisle C scans rejected by WMS as unknown SKUs","telemetry_snippet":"Drone OK, no errors","maintenance_snippet":"Drone serviced last week"} },
+    { label: 'Optics dirty', values: {"failure_summary":"30% scan success in zone D","telemetry_snippet":"Camera contrast dropped 40%","maintenance_snippet":"Optics not cleaned in 60 days"} }
+  ],
+  'photo-damage-classify': [
+    { label: 'Crushed corner', values: {"photo_description":"Pallet corner crushed, plastic wrap torn, contents leaning.","sku":"SKU-A-001","location":"A-1-3"} },
+    { label: 'Wet damage', values: {"photo_description":"Cardboard discolored on lower third, possible water exposure.","sku":"SKU-B-220","location":"B-2-1"} },
+    { label: 'Clean', values: {"photo_description":"Pallet appears intact, wrap clean, labels readable.","sku":"SKU-C-451","location":"C-3-1"} }
   ]
 };
 
@@ -145,6 +175,46 @@ router.post('/exception-routing', async (req, res) => {
   try {
     const result = await ai.runFeature('exception-routing', SCHEMAS['exception-routing'], req.body || {});
     await record('exception-routing', req.body || {}, result);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/mis-pick-detect', async (req, res) => {
+  try {
+    const result = await ai.runFeature('mis-pick-detect', SCHEMAS['mis-pick-detect'], req.body || {});
+    await record('mis-pick-detect', req.body || {}, result);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/slot-occupancy-forecast', async (req, res) => {
+  try {
+    const result = await ai.runFeature('slot-occupancy-forecast', SCHEMAS['slot-occupancy-forecast'], req.body || {});
+    await record('slot-occupancy-forecast', req.body || {}, result);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/anomaly-narrate', async (req, res) => {
+  try {
+    const result = await ai.runFeature('anomaly-narrate', SCHEMAS['anomaly-narrate'], req.body || {});
+    await record('anomaly-narrate', req.body || {}, result);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/scan-failure-rca', async (req, res) => {
+  try {
+    const result = await ai.runFeature('scan-failure-rca', SCHEMAS['scan-failure-rca'], req.body || {});
+    await record('scan-failure-rca', req.body || {}, result);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/photo-damage-classify', async (req, res) => {
+  try {
+    const result = await ai.runFeature('photo-damage-classify', SCHEMAS['photo-damage-classify'], req.body || {});
+    await record('photo-damage-classify', req.body || {}, result);
     res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

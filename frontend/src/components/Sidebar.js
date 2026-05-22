@@ -14,6 +14,7 @@ const CRUD_LINKS = [
   { to: '/work-orders', label: 'Work Orders' },
   { to: '/maintenance-events', label: 'Maintenance Events' },
   { to: '/telemetry', label: 'Telemetry' },
+  { to: '/scan-schedules', label: 'Scan Schedules' },
 ];
 
 const AI_LINKS = [
@@ -25,12 +26,22 @@ const AI_LINKS = [
   { to: '/ai/demand-forecast', label: 'AI · SKU Demand Forecast' },
   { to: '/ai/swarm-coordinator', label: 'AI · Swarm Coordinator' },
   { to: '/ai/exception-routing', label: 'AI · Exception Routing' },
+  { to: '/ai/mis-pick-detect', label: 'AI · Mis-pick Detection' },
+  { to: '/ai/slot-occupancy-forecast', label: 'AI · Slot Occupancy' },
+  { to: '/ai/anomaly-narrate', label: 'AI · Anomaly Narrator' },
+  { to: '/ai/scan-failure-rca', label: 'AI · Scan-failure RCA' },
+  { to: '/ai/photo-damage-classify', label: 'AI · Photo Damage' },
 ];
 
 const CUSTOM_LINKS = [
   { to: '/wb/live-map', label: 'Live Map' },
   { to: '/wb/discrepancy-inbox', label: 'Discrepancy Inbox' },
   { to: '/custom-views', label: 'Drone Inv Views' },
+  { to: '/audit-log', label: 'Audit Log' },
+  { to: '/wms-live', label: 'WMS Live Connector' },
+  { to: '/scan-proofs', label: 'Scan Proof-of-Count' },
+  { to: '/cross-dc-reconciliations', label: 'Cross-DC Reconciliation' },
+  { to: '/technician-dispatches', label: 'Technician Dispatch' },
 ];
 
 export default function Sidebar() {

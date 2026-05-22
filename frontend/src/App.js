@@ -29,6 +29,24 @@ import CustomViewsPage from './pages/CustomViewsPage';
 import { getToken } from './services/api';
 import './App.css';
 
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
+
+// Apply pass 7: backlog pages
+import AIMisPickDetectPage from './pages/AIMisPickDetectPage';
+import AISlotOccupancyForecastPage from './pages/AISlotOccupancyForecastPage';
+import AIAnomalyNarratePage from './pages/AIAnomalyNarratePage';
+import AIScanFailureRcaPage from './pages/AIScanFailureRcaPage';
+import AIPhotoDamageClassifyPage from './pages/AIPhotoDamageClassifyPage';
+import ScanSchedulesPage from './pages/ScanSchedulesPage';
+import AuditLogPage from './pages/AuditLogPage';
+import WmsLivePage from './pages/WmsLivePage';
+import ScanProofsPage from './pages/ScanProofsPage';
+import CrossDcReconciliationPage from './pages/CrossDcReconciliationPage';
+import TechnicianDispatchPage from './pages/TechnicianDispatchPage';
+
 function RequireAuth({ children }) {
   const location = useLocation();
   if (!getToken()) return <Navigate to="/login" replace state={{ from: location }} />;
@@ -43,6 +61,10 @@ function Shell() {
         <Topbar />
         <div style={{ padding: '24px 32px' }}>
           <Routes>
+        <Route path="/insights/timeline" element={<TimelineView />} />
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
             <Route path="/" element={<Dashboard />} />
             <Route path="/warehouses" element={<WarehousesPage />} />
             <Route path="/drones" element={<DronesPage />} />
@@ -66,6 +88,17 @@ function Shell() {
             <Route path="/wb/live-map" element={<LiveMapWorkbench />} />
             <Route path="/wb/discrepancy-inbox" element={<DiscrepancyInboxWorkbench />} />
             <Route path="/custom-views" element={<CustomViewsPage />} />
+            <Route path="/ai/mis-pick-detect" element={<AIMisPickDetectPage />} />
+            <Route path="/ai/slot-occupancy-forecast" element={<AISlotOccupancyForecastPage />} />
+            <Route path="/ai/anomaly-narrate" element={<AIAnomalyNarratePage />} />
+            <Route path="/ai/scan-failure-rca" element={<AIScanFailureRcaPage />} />
+            <Route path="/ai/photo-damage-classify" element={<AIPhotoDamageClassifyPage />} />
+            <Route path="/scan-schedules" element={<ScanSchedulesPage />} />
+            <Route path="/audit-log" element={<AuditLogPage />} />
+            <Route path="/wms-live" element={<WmsLivePage />} />
+            <Route path="/scan-proofs" element={<ScanProofsPage />} />
+            <Route path="/cross-dc-reconciliations" element={<CrossDcReconciliationPage />} />
+            <Route path="/technician-dispatches" element={<TechnicianDispatchPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

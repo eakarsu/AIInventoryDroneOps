@@ -5,6 +5,7 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const { authenticateToken } = require('./middleware/auth');
+const { auditLog } = require('./middleware/auditLog');
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 4061;
@@ -19,6 +20,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'AIInvent
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', authenticateToken);
+app.use('/api', auditLog);
 
 // CRUD entities
 app.use('/api/warehouses', require('./routes/Warehouses'));
@@ -42,5 +44,13 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Custom views (mounted BEFORE any 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
+
+// Apply pass 7: backlog routes (mounted BEFORE any 404 handler)
+app.use('/api/scan-schedules', require('./routes/ScanSchedules'));
+app.use('/api/audit-log', require('./routes/auditLog'));
+app.use('/api/wms-live', require('./routes/wmsLive'));
+app.use('/api/scan-proofs', require('./routes/scanProofs'));
+app.use('/api/cross-dc-reconciliations', require('./routes/crossDcReconciliation'));
+app.use('/api/technician-dispatches', require('./routes/technicianDispatch'));
 
 app.listen(PORT, () => console.log(`\nInventory Drone Operations API on http://localhost:${PORT}\n`));
