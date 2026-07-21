@@ -26,6 +26,7 @@ app.use('/api', auditLog);
 app.use('/api/warehouses', require('./routes/Warehouses'));
 app.use('/api/drones', require('./routes/Drones'));
 app.use('/api/missions', require('./routes/Missions'));
+app.use('/api/mission-operations', require('./routes/missionOperations'));
 app.use('/api/scan-results', require('./routes/ScanResults'));
 app.use('/api/discrepancies', require('./routes/Discrepancies'));
 app.use('/api/zones', require('./routes/Zones'));

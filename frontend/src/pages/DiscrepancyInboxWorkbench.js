@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 const TOKEN_KEY = Object.keys(localStorage).find((k) => k.endsWith('_token')) || 'inventory_drone_ops_token';
-const API_BASE = 'http://localhost:4061/api';
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4061/api';
 export default function DiscrepancyInboxWorkbench(){
   const [rows,setRows]=useState([]);const [filter,setFilter]=useState('all');const [busy,setBusy]=useState(null);
   const load=()=>fetch(API_BASE+'/discrepancies',{headers:{Authorization:'Bearer '+localStorage.getItem(TOKEN_KEY)}}).then(r=>r.json()).then(setRows);

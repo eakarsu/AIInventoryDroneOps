@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const API_BASE = 'http://localhost:4061/api';
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4061/api';
 const tokenKey = Object.keys(localStorage).find((k) => k.endsWith('_token')) || 'inventory_drone_ops_token';
 
 const blankRule = () => ({

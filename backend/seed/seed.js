@@ -1,8 +1,24 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const pool = require('../config/database');
 
 async function main() {
+  if (process.env.NODE_ENV === 'production' ||
+      (process.env.ALLOW_DEMO_SEED !== 'true' && process.env.ALLOW_DEVELOPMENT_SEED !== 'yes')) {
+    throw new Error('Demo seed is disabled; enable it explicitly outside production');
+  }
+  const demoEmail = process.env.DEMO_EMAIL || 'admin@inventory-drone-ops.local';
+  const demoPassword = process.env.DEMO_SEED_PASSWORD || process.env.DEMO_PASSWORD;
+  if (!demoPassword || demoPassword.length < 12) {
+    throw new Error('DEMO_SEED_PASSWORD or DEMO_PASSWORD must contain at least 12 characters');
+  }
+  const configuredTenant = process.env.GOVERNANCE_TENANT_ID || '';
+  const tenantId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(configuredTenant)
+    ? configuredTenant
+    : '00000000-0000-4000-8000-000000000001';
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordDigest = `scrypt$${salt}$${crypto.scryptSync(demoPassword, salt, 64).toString('hex')}`;
   const migDir = path.join(__dirname, '..', 'migrations');
   for (const f of fs.readdirSync(migDir).filter((x) => x.endsWith('.sql')).sort()) {
     const sql = fs.readFileSync(path.join(migDir, f), 'utf8');
@@ -10,7 +26,22 @@ async function main() {
     catch (e) { console.warn(`[seed] ${f} warn: ${e.message}`); }
   }
   await pool.query(
-    "INSERT INTO users (email, password, name, role) VALUES ('admin@inventory-drone-ops.local','secure123','Admin','commander') ON CONFLICT (email) DO NOTHING"
+    `INSERT INTO organizations (id, name) VALUES ($1, 'Demo Inventory Operations')
+     ON CONFLICT (id) DO NOTHING`,
+    [tenantId]
+  );
+  const userResult = await pool.query(
+    `INSERT INTO users (email, password, password_digest, name, role, tenant_id)
+     VALUES ($1, '!legacy-password-disabled!', $2, 'Admin', 'commander', $3)
+     ON CONFLICT (email) DO UPDATE SET password_digest=EXCLUDED.password_digest, tenant_id=EXCLUDED.tenant_id
+     RETURNING id`,
+    [demoEmail, passwordDigest, tenantId]
+  );
+  await pool.query(
+    `INSERT INTO tenant_memberships (tenant_id, user_id, role, active)
+     VALUES ($1, $2, 'commander', TRUE)
+     ON CONFLICT (tenant_id, user_id) DO UPDATE SET role=EXCLUDED.role, active=TRUE`,
+    [tenantId, userResult.rows[0].id]
   );
   console.log('[seed] demo user ready');
 
