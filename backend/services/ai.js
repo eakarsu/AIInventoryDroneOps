@@ -1,25 +1,8 @@
 // LLM helper for Inventory Drone Operations
-const fs = require('fs');
-const FALLBACK_ENV = '/Users/erolakarsu/projects/beauty-wellness-ai/.env';
-function readFallback() {
-  try {
-    if (!fs.existsSync(FALLBACK_ENV)) return {};
-    const out = {};
-    for (const line of fs.readFileSync(FALLBACK_ENV, 'utf8').split('\n')) {
-      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-      if (!m) continue;
-      let v = m[2];
-      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
-      out[m[1]] = v;
-    }
-    return out;
-  } catch (_) { return {}; }
-}
 function creds() {
-  const fb = readFallback();
   return {
-    key: process.env.OPENROUTER_API_KEY || fb.OPENROUTER_API_KEY || '',
-    model: process.env.OPENROUTER_MODEL || fb.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5',
+    key: process.env.OPENROUTER_API_KEY || '',
+    model: process.env.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5',
   };
 }
 const SYSTEM_BASE = 'You are a senior analyst supporting the Inventory Drone Operations. ' +
@@ -33,12 +16,16 @@ function callOpenRouter(systemPrompt, userPrompt) {
     const { key, model } = creds();
     if (!key) return resolve({ error: 'OPENROUTER_API_KEY not configured' });
     const https = require('https');
+    const baseUrl = new URL(process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1');
     const payload = JSON.stringify({
       model, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
       temperature: 0.4, max_tokens: 6000, response_format: { type: 'json_object' },
     });
     const req = https.request({
-      hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
+      hostname: baseUrl.hostname,
+      port: baseUrl.port || 443,
+      path: `${baseUrl.pathname.replace(/\/$/, '')}/chat/completions`,
+      method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload),
         Authorization: `Bearer ${key}`,
         'HTTP-Referer': 'http://localhost:4060', 'X-Title': 'Inventory Drone Operations' },

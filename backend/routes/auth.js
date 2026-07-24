@@ -42,7 +42,10 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Invalid email or password' });
     const token = jwt.sign(user, getJwtSecret(), { expiresIn: process.env.JWT_TTL || '1h', issuer: 'inventory-drone-ops' });
     res.json({ token, user });
-  } catch (e) { res.status(500).json({ error: 'Server error' }); }
+  } catch (e) {
+    console.error('Login error:', e.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 router.get('/me', authenticateToken, (req, res) => {

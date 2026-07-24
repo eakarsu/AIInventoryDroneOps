@@ -2,6 +2,11 @@
 set -Eeuo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[ -f "$PROJECT_DIR/.env" ] || { echo "Create .env from .env.example first." >&2; exit 1; }
+set -a
+# shellcheck disable=SC1091
+source "$PROJECT_DIR/.env"
+set +a
 BACKEND_PORT="${BACKEND_PORT:-4061}"
 FRONTEND_PORT="${FRONTEND_PORT:-4060}"
 ALLOWED_ORIGINS="${ALLOWED_ORIGINS:-http://127.0.0.1:$FRONTEND_PORT,http://localhost:$FRONTEND_PORT}"
